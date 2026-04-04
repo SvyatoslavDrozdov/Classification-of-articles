@@ -1,7 +1,6 @@
 import pandas as pd
 import torch
 import streamlit as st
-import numpy as np
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -41,7 +40,7 @@ def predict_all_probs(model, tokenizer, device, title: str, abstract: str = "", 
 
 
 def predict_top(model, tokenizer, device, title: str, abstract: str = "", threshold: float = 0.95,
-                  max_length: int = 256):
+                max_length: int = 256):
     df = predict_all_probs(model, tokenizer, device, title, abstract, max_length=max_length)
 
     cumulative = 0.0
@@ -58,14 +57,17 @@ def predict_top(model, tokenizer, device, title: str, abstract: str = "", thresh
 
 @st.cache_resource
 def load_model_and_tokenizer():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
+
+    repo_id="Svyat-dr/article-classifier-weights"
+    tokenizer = AutoTokenizer.from_pretrained(repo_id)
+    model = AutoModelForSequenceClassification.from_pretrained(repo_id)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
 
     return tokenizer, model, device
+
 
 
 def main():
@@ -87,12 +89,12 @@ def main():
         "Abstract",
         height=200
     )
-    st.write("Topics are shown in descending order of probability until their cumulative probability is greater than or "
-             "equal to the threshold selected by the user.")
+    st.write(
+        "Topics are shown in descending order of probability until their cumulative probability is greater than or "
+        "equal to the threshold selected by the user.")
 
     threshold = st.slider("Cumulative percentage of the selected topics", min_value=0.0, max_value=1.0, value=0.95,
                           step=0.01)
-
 
     classification_button = st.button("Classify")
 
@@ -106,8 +108,9 @@ def main():
             top1 = top_df.iloc[0]
             st.success(f"Top-1: {top1['topic']} ({top1['probability_percent']}%)")
 
-            st.subheader(f"Top-{round(threshold*100, 0)}% topics.")
+            st.subheader(f"Top-{round(threshold * 100, 0)}% topics.")
             st.dataframe(top_df[["topic", "probability_percent"]], use_container_width=True)
+
 
 if __name__ == "__main__":
     main()

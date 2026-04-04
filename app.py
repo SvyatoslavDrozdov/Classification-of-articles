@@ -76,7 +76,7 @@ def main():
     st.write(
         "Enter the article title and abstract. If the abstract is empty, the model will classify by title only. "
         "This application classifies articles into the following topics: physics, mathematics, computer science, "
-        "statistics, electrical engineering, biology, and economics.")
+        "statistics, electrical engineering, biology, and economics. This model only works with English language.")
 
     tokenizer, model, device = load_model_and_tokenizer()
 

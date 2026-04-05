@@ -4,8 +4,7 @@ import streamlit as st
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-MODEL_DIR: str = "Article_classification_model"
-
+TEMPERATURE: float = 1.56
 
 def predict_all_probs(model, tokenizer, device, title: str, abstract: str = "", max_length: int = 256):
     model.eval()
@@ -14,7 +13,7 @@ def predict_all_probs(model, tokenizer, device, title: str, abstract: str = "", 
         title.strip(),
         (abstract or "").strip(),
         return_tensors="pt",
-        truncation="only_second",
+        truncation=True,
         max_length=max_length,
         padding=True,
     )
@@ -24,6 +23,7 @@ def predict_all_probs(model, tokenizer, device, title: str, abstract: str = "", 
     with torch.no_grad():
         outputs = model(**inputs)
         logits = outputs.logits[0]
+        logits = logits / TEMPERATURE
         probs = torch.softmax(logits, dim=-1).detach().cpu().numpy()
 
     id2label_local = model.config.id2label
@@ -57,8 +57,7 @@ def predict_top(model, tokenizer, device, title: str, abstract: str = "", thresh
 
 @st.cache_resource
 def load_model_and_tokenizer():
-
-    repo_id="Svyat-dr/article-classifier-weights"
+    repo_id = "Svyat-dr/article-classifier-weights"
     tokenizer = AutoTokenizer.from_pretrained(repo_id)
     model = AutoModelForSequenceClassification.from_pretrained(repo_id)
 
@@ -67,7 +66,6 @@ def load_model_and_tokenizer():
     model.eval()
 
     return tokenizer, model, device
-
 
 
 def main():
